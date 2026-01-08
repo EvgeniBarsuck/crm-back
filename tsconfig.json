@@ -10,7 +10,10 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    // Отключаем verbatimModuleSyntax, так как мы компилируем в CommonJS
+    "verbatimModuleSyntax": false
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]

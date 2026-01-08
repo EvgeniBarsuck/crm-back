@@ -5,6 +5,7 @@ import { Telegraf } from "telegraf";
 import cors from "cors";
 import { db, merchants } from "./src/database";
 import { sql } from "drizzle-orm";
+import { seed } from "./src/database/seed";
 
 export const run = async () => {
   const app = express();
@@ -75,7 +76,9 @@ export const run = async () => {
       console.error(error);
       return res.status(500).json({ error: "Database error" });
     }
-  });
+  });// Seed the database
+
+  await seed();
 
   await app.listen(process.env.PORT || 3000, () => {
     console.log("Server is running on port 3000");

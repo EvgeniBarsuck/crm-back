@@ -1,7 +1,7 @@
 import { db } from './db'; // Твой инстанс drizzle
     import { merchants, customers } from './entities';
 
-async function seed() {
+export async function seed() {
    await db.insert(merchants)
      .values({ id: 12345, username: 'dev_user' }) 
      .onConflictDoNothing();
@@ -11,5 +11,3 @@ async function seed() {
 
    console.log('Seed done');
 }
-
-seed();
