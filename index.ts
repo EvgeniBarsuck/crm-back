@@ -6,6 +6,7 @@ import cors from "cors";
 import { db, merchants } from "./src/database";
 import { sql } from "drizzle-orm";
 import { seed } from "./src/database/seed";
+import { setupOrderApi } from "./src/order/order.api";
 
 export const run = async () => {
   const app = express();
@@ -27,6 +28,7 @@ export const run = async () => {
     next();
   });
   
+  setupOrderApi(app);
   // 2. Auth middleware подключаем глобально или точечно к роутам
   // Если подключить глобально, то health-check тоже будет требовать авторизацию
   // app.use(telegramAuth); 
