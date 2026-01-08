@@ -14,7 +14,7 @@ export const run = async () => {
     cors({
       // Разрешаем все источники для разработки (Flutter Web запускается на случайном порту)
       origin: "*", 
-      allowedHeaders: ["Authorization", "Content-Type"],
+      allowedHeaders: ["Authorization", "Content-Type", "Accept"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       credentials: true,
     })
