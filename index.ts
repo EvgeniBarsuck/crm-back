@@ -43,14 +43,9 @@ export const run = async () => {
 
   bot.start((ctx) => ctx.reply("Привет! Бэкенд работает."));
 
-  bot
-    .launch()
-    .then(() => {
-      setupOrderApi(app, bot);
-    })
-    .catch((err) => {
-      console.error("Ошибка запуска бота:", err);
-    });
+  await bot.launch();
+
+  setupOrderApi(app, bot);
 
   // Роут для авторизации/регистрации
   app.get("/api/auth/me", telegramAuth, async (req, res) => {
