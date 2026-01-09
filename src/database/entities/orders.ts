@@ -1,4 +1,5 @@
 import { pgTable, serial, bigint, integer, numeric, text, timestamp } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 import { merchants } from './merchants';
 import { customers } from './customers';
 
@@ -10,3 +11,14 @@ export const orders = pgTable('orders', {
   status: text('status').default('new'), // new, done, cancelled
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  customer: one(customers, {
+    fields: [orders.customerId],
+    references: [customers.id],
+  }),
+  merchant: one(merchants, {
+    fields: [orders.merchantId],
+    references: [merchants.id],
+  }),
+}));

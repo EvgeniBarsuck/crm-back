@@ -7,7 +7,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // Middleware для Express
 export const telegramAuth = (req: Request, res: Response, next: NextFunction) => {
-
+  console.log('telegramAuth', process.env.NODE_ENV);
   if (process.env.NODE_ENV === 'development') {
     req.user = {
       id: 12345,
@@ -17,6 +17,8 @@ export const telegramAuth = (req: Request, res: Response, next: NextFunction) =>
       language_code: 'en',
       is_premium: false,
     } as TelegramUser;
+    console.log('User authenticated');
+
     next();
     return;
 
