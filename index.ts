@@ -43,7 +43,8 @@ export const run = async () => {
 
   bot.start((ctx) => ctx.reply("Привет! Бэкенд работает."));
 
-  await bot.launch();
+  // Запускаем бота без await, чтобы не блокировать запуск сервера
+  bot.launch().catch((err) => console.error("Bot launch error:", err));
 
   setupOrderApi(app, bot);
 
