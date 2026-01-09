@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node index.ts",
+    "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migration:generate": "drizzle-kit generate",
     "migration:run": "ts-node src/database/migrate.ts",
@@ -30,6 +30,7 @@
     "@types/node": "^25.0.3",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8",
+    "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

@@ -7,6 +7,20 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // Middleware для Express
 export const telegramAuth = (req: Request, res: Response, next: NextFunction) => {
+
+  if (process.env.NODE_ENV === 'development') {
+    req.user = {
+      id: 12345,
+      first_name: 'Test',
+      last_name: 'Test',
+      username: 'test',
+      language_code: 'en',
+      is_premium: false,
+    } as TelegramUser;
+    next();
+    return;
+
+  }
   // Фронт будет слать строку initData в заголовке Authorization
   // Пример заголовка: "Authorization: query_id=..."
   console.log(req.headers);

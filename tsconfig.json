@@ -15,6 +15,9 @@
     // Отключаем verbatimModuleSyntax, так как мы компилируем в CommonJS
     "verbatimModuleSyntax": false
   },
+  "ts-node": {
+    "transpileOnly": true
+  },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
