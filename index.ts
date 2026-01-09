@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import { seed } from "./src/database/seed";
 import { setupOrderApi } from "./src/order/order.api";
 import { setupCustomerApi } from "./src/customer/customer.api";
+import { setupMerchantApi } from "./src/merchant/merchant.api";
 
 export const run = async () => {
   const app = express();
@@ -32,6 +33,7 @@ export const run = async () => {
 
   setupOrderApi(app);
   setupCustomerApi(app);
+  setupMerchantApi(app);
 
   const token = process.env.TELEGRAM_BOT_TOKEN || "ТВОЙ_ТОКЕН_ИЗ_BOTFATHER";
 
