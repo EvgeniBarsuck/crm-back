@@ -1,7 +1,24 @@
 version: '3.8'
 
 services:
-
+  app:
+    build: .
+    container_name: crm_server
+    ports:
+      - "3000:3000"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-crm_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-crm_secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-crm}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - PORT=3000
+    depends_on:
+      - db
+    # Для разработки с Hot Reload:
+    # 1. Раскомментируйте volumes
+    # 2. Измените command на npm run dev
 
   db:
     image: postgres:15-alpine
@@ -28,7 +45,8 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
       - ../web/client/build/web:/var/www/bar-uk-frontend
-
+    depends_on:
+      - app
 
   certbot:
     image: certbot/certbot
