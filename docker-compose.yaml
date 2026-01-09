@@ -28,8 +28,7 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
       - ../web/client/build/web:/var/www/bar-uk-frontend
-    depends_on:
-      - app
+
 
   certbot:
     image: certbot/certbot
