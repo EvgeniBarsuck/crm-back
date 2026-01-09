@@ -3,7 +3,7 @@ import { db } from "../database/db";
 import { orders } from "../database/entities/orders";
 import { eq, desc } from "drizzle-orm";
 import { Express } from "express";
-import { customers } from "src/database/entities/customers";
+import { customers } from "../database/entities/customers";
 import { Context, Telegraf } from "telegraf";
 
 export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
