@@ -1,6 +1,6 @@
 import { Express } from "express";
-import { db, merchants } from "src/database";
-import { telegramAuth } from "src/middleware/auth";
+import { db, merchants } from "../database";
+import { telegramAuth } from "../middleware/auth";
 
 export const setupMerchantApi = (app: Express) => {
   app.get("/api/me", telegramAuth, async (req, res) => {
