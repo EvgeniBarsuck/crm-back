@@ -3,28 +3,30 @@ import { db } from "../database/db";
 import { orders } from "../database/entities/orders";
 import { eq, desc } from "drizzle-orm";
 import { Express } from "express";
+import { customers } from "src/database/entities/customers";
+import { Context, Telegraf } from "telegraf";
 
-export const setupOrderApi = (app: Express) => {
+export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
   console.log("🛠️ Регистрируем роуты Order API..."); // DEBUG
-  
+
   app.get("/api/orders", telegramAuth, async (req, res) => {
     const user = req.user;
-    console.log('req.user', req.user);
+    console.log("req.user", req.user);
     if (!user) return res.status(401).json({ error: "Unauthorized" });
-    console.log('user', user);  
+    console.log("user", user);
     const merchantId = user.id;
 
     try {
-      console.log('merchantId', merchantId);
+      console.log("merchantId", merchantId);
       const list = await db.query.orders.findMany({
         where: eq(orders.merchantId, merchantId),
         with: { customer: true },
         orderBy: [desc(orders.createdAt)],
       });
-      console.log('list', list);
+      console.log("list", list);
       res.status(200).json(list);
     } catch (e) {
-      console.log('error', e);
+      console.log("error", e);
       console.error(e);
       res.status(500).json({ error: "Server error" });
     }
@@ -34,7 +36,7 @@ export const setupOrderApi = (app: Express) => {
   app.post("/api/orders", telegramAuth, async (req, res) => {
     // @ts-ignore
     const merchantId = req.user.id;
-    console.log('merchantId', merchantId);
+    console.log("merchantId", merchantId);
     const { total_amount, customer_id } = req.body;
 
     if (!total_amount) return res.status(400).json({ error: "No amount" });
@@ -49,6 +51,36 @@ export const setupOrderApi = (app: Express) => {
           status: "new",
         })
         .returning();
+
+      // --- 👇 НОВЫЙ КОД: ОТПРАВКА УВЕДОМЛЕНИЯ ---
+      try {
+        // 2. Ищем имя клиента для красивого сообщения
+        // (Можно оптимизировать через join, но сделаем просто)
+        const [customer] = await db
+          .select()
+          .from(customers)
+          .where(eq(customers.id, customer_id));
+
+        const customerName = customer ? customer.name : "Клиент";
+
+        const message = `
+  ✅ <b>Новый заказ #${newOrder.id}</b>
+  
+  👤 Клиент: <b>${customerName}</b>
+  💰 Сумма: <b>${total_amount} ₽</b>
+  🕒 Статус: 🆕 Новый
+  
+  <i>Заказ сохранен в базе данных.</i>
+        `;
+
+        await bot.telegram.sendMessage(merchantId, message, {
+          parse_mode: "HTML",
+        });
+      } catch (err) {
+        console.error("Ошибка отправки сообщения в ТГ:", err);
+        // Не роняем запрос, если сообщение не ушло
+      }
+      // --- 👆 КОНЕЦ НОВОГО КОДА ---
 
       res.json(newOrder);
     } catch (e) {

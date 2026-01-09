@@ -16,7 +16,7 @@ export const run = async () => {
   // 1. CORS должен быть первым
   app.use(
     cors({
-      origin: "*", 
+      origin: "*",
       allowedHeaders: ["Authorization", "Content-Type", "Accept"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       credentials: true,
@@ -24,14 +24,12 @@ export const run = async () => {
   );
 
   app.use(express.json());
-  
+
   app.use((req, res, next) => {
     console.log(`📩 ЗАПРОС ПРИШЕЛ: ${req.method} ${req.url}`);
     next();
   });
-  
 
-  setupOrderApi(app);
   setupCustomerApi(app);
   setupMerchantApi(app);
 
@@ -45,9 +43,14 @@ export const run = async () => {
 
   bot.start((ctx) => ctx.reply("Привет! Бэкенд работает."));
 
-  bot.launch().catch((err) => {
+  bot
+    .launch()
+    .then(() => {
+      setupOrderApi(app, bot);
+    })
+    .catch((err) => {
       console.error("Ошибка запуска бота:", err);
-  });
+    });
 
   // Роут для авторизации/регистрации
   app.get("/api/auth/me", telegramAuth, async (req, res) => {
@@ -58,14 +61,17 @@ export const run = async () => {
     }
 
     try {
-      await db.insert(merchants).values({
-        id: user.id,
-        username: user.username,
-      }).onConflictDoUpdate({
-        target: merchants.id,
-        set: { username: user.username },
-      });
-      
+      await db
+        .insert(merchants)
+        .values({
+          id: user.id,
+          username: user.username,
+        })
+        .onConflictDoUpdate({
+          target: merchants.id,
+          set: { username: user.username },
+        });
+
       return res.json({
         id: user.id,
         username: user.username,
