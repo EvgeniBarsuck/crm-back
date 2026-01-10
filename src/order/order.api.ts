@@ -17,12 +17,21 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     const merchantId = user.id;
 
     try {
-      console.log("merchantId", merchantId);
-      const list = await db.query.orders.findMany({
-        where: eq(orders.merchantId, merchantId),
-        with: { customer: true },
-        orderBy: [desc(orders.createdAt)],
-      });
+      const list = await db
+        .select({
+          id: orders.id,
+          totalAmount: orders.totalAmount,
+          status: orders.status,
+          createdAt: orders.createdAt,
+          // 👇 ВАЖНО: Явно берем имя и называем его customerName
+          customerName: customers.name,
+        })
+        .from(orders)
+        // 👇 Соединяем таблицу заказов с таблицей клиентов
+        .leftJoin(customers, eq(orders.customerId, customers.id))
+        .where(eq(orders.merchantId, merchantId))
+        .orderBy(desc(orders.createdAt));
+
       console.log("list", list);
       res.status(200).json(list);
     } catch (e) {
@@ -88,45 +97,63 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
       res.status(500).json({ error: "Server error" });
     }
   });
-
-  app.patch('/api/orders/:id/status', telegramAuth, async (req, res) => {
+  app.patch("/api/orders/:id/status", telegramAuth, async (req, res) => {
     // @ts-ignore
     const merchantId = req.user.id;
-    const orderId = parseInt(req.params.id);
+    const orderId = parseInt(req.params.id); // Превращаем строку ID в число
     const { status } = req.body;
-  
-    const validStatuses = ['new', 'in_progress', 'completed', 'cancelled'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+
+    console.log(
+      `📝 Попытка смены статуса. OrderID: ${orderId}, Новый статус: ${status}`
+    );
+
+    // Валидация
+    if (isNaN(orderId)) {
+      return res.status(400).json({ error: "Invalid ID" });
+    }
+
+    const validStatuses = ["new", "in_progress", "completed", "cancelled"];
+    if (!status || !validStatuses.includes(status)) {
+      console.log("❌ Неверный статус:", status);
+      return res.status(400).json({ error: "Invalid status" });
     }
 
     try {
-      // 1. Обновляем статус в БД
-      const [updatedOrder] = await db.update(orders)
+      // Обновляем
+      const [updatedOrder] = await db
+        .update(orders)
         .set({ status: status })
-        .where(eq(orders.id, orderId)) // И желательно проверять merchantId, но для MVP опустим
+        .where(eq(orders.id, orderId))
         .returning();
-  
+
       if (!updatedOrder) {
-        return res.status(404).json({ error: 'Order not found' });
+        console.log("❌ Заказ не найден или не принадлежит мерчанту");
+        return res.status(404).json({ error: "Order not found" });
       }
-  
-      // 2. (Опционально) Шлем уведомление мерчанту в чат, чтобы была история изменений
-      // Или, если бы у нас были ID клиентов-юзеров ТГ, мы бы слали ИМ.
-      // Пока шлем "Себе в лог":
-      const statusEmoji: Record<string, string> = {
-        'new': '🆕', 'in_progress': '⏳', 'completed': '✅', 'cancelled': '❌'
-      };
-  
-      await bot.telegram.sendMessage(merchantId, 
-        `Статус заказа #${orderId} изменен на: ${statusEmoji[status]} <b>${status}</b>`, 
-        { parse_mode: 'HTML' }
-      );
-  
+
+      console.log("✅ Статус успешно обновлен");
+
+      // Пытаемся отправить уведомление (в try/catch, чтобы не ронять запрос)
+      try {
+        const statusEmoji: Record<string, string> = {
+          new: "🆕",
+          in_progress: "⏳",
+          completed: "✅",
+          cancelled: "❌",
+        };
+        await bot.telegram.sendMessage(
+          merchantId,
+          `Статус заказа #${orderId} изменен на: ${statusEmoji[status]} <b>${status}</b>`,
+          { parse_mode: "HTML" }
+        );
+      } catch (msgErr) {
+        console.error("Не удалось отправить сообщение в ТГ:", msgErr);
+      }
+
       res.json(updatedOrder);
     } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: 'Server error' });
+      console.error("🔥 Ошибка базы данных:", e);
+      res.status(500).json({ error: "Server error" });
     }
   });
 };
