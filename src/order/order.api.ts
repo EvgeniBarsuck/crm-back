@@ -25,6 +25,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           createdAt: orders.createdAt,
           // 👇 ВАЖНО: Явно берем имя и называем его customerName
           customerName: customers.name,
+          comment: orders.comment,
         })
         .from(orders)
         // 👇 Соединяем таблицу заказов с таблицей клиентов
@@ -212,6 +213,42 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.patch('/api/orders/:id/info', telegramAuth, async (req, res) => {
+    // @ts-ignore
+    const merchantId = req.user.id;
+    const orderId = parseInt(req.params.id);
+    const { comment, amount } = req.body; // Принимаем и то, и то
+  
+    // Формируем объект для обновления (Dynamic Update)
+    const updateValues: any = {};
+    if (comment !== undefined) updateValues.comment = comment;
+    if (amount !== undefined) updateValues.totalAmount = String(amount); // В базе decimal/numeric часто хранится как строка
+  
+    // Если нечего обновлять — ошибка
+    if (Object.keys(updateValues).length === 0) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+  
+    try {
+      const [updatedOrder] = await db.update(orders)
+        .set(updateValues)
+        .where(and(
+          eq(orders.id, orderId),
+          eq(orders.merchantId, merchantId)
+        ))
+        .returning();
+  
+      if (!updatedOrder) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+  
+      res.json(updatedOrder);
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: 'Server error' });
     }
   });
 };
