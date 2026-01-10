@@ -195,19 +195,25 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     const orderId = parseInt(req.params.id);
 
     try {
-      const [deletedOrder] = await db
-        .delete(orders)
-        .where(
-          and(
-            eq(orders.id, orderId),
-            eq(orders.merchantId, merchantId) // Защита: удаляем только свои
-          )
-        )
-        .returning();
+      // 1. Сначала ищем заказ
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
-      if (!deletedOrder) {
+      if (!existingOrder) {
         return res.status(404).json({ error: "Order not found" });
       }
+
+      // 2. ЖЕСТКАЯ ПРОВЕРКА: Если статус не 'new', запрещаем удаление
+      if (existingOrder.status !== "new") {
+        return res
+          .status(400)
+          .json({ error: "Можно удалять только новые заказы (черновики)" });
+      }
+
+      // 3. Если всё ок — удаляем
+      await db.delete(orders).where(eq(orders.id, orderId));
 
       res.json({ success: true });
     } catch (e) {
@@ -216,39 +222,37 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     }
   });
 
-  app.patch('/api/orders/:id/info', telegramAuth, async (req, res) => {
+  app.patch("/api/orders/:id/info", telegramAuth, async (req, res) => {
     // @ts-ignore
     const merchantId = req.user.id;
     const orderId = parseInt(req.params.id);
     const { comment, amount } = req.body; // Принимаем и то, и то
-  
+
     // Формируем объект для обновления (Dynamic Update)
     const updateValues: any = {};
     if (comment !== undefined) updateValues.comment = comment;
     if (amount !== undefined) updateValues.totalAmount = String(amount); // В базе decimal/numeric часто хранится как строка
-  
+
     // Если нечего обновлять — ошибка
     if (Object.keys(updateValues).length === 0) {
-      return res.status(400).json({ error: 'Nothing to update' });
+      return res.status(400).json({ error: "Nothing to update" });
     }
-  
+
     try {
-      const [updatedOrder] = await db.update(orders)
+      const [updatedOrder] = await db
+        .update(orders)
         .set(updateValues)
-        .where(and(
-          eq(orders.id, orderId),
-          eq(orders.merchantId, merchantId)
-        ))
+        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
         .returning();
-  
+
       if (!updatedOrder) {
-        return res.status(404).json({ error: 'Order not found' });
+        return res.status(404).json({ error: "Order not found" });
       }
-  
+
       res.json(updatedOrder);
     } catch (e) {
       console.error(e);
-      res.status(500).json({ error: 'Server error' });
+      res.status(500).json({ error: "Server error" });
     }
   });
 };
