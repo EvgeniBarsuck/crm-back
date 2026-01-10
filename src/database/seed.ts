@@ -7,7 +7,7 @@ export async function seed() {
      .onConflictDoNothing();
 
    await db.insert(customers)
-     .values({ merchantId: 12345, name: 'Тестовый Клиент', phone: '+79991234567' });
+     .values({ merchantId: 12345, name: 'Тестовый Клиент', phone: '+79991234567', inviteToken: 'test_token' });
 
    console.log('Seed done');
 }
