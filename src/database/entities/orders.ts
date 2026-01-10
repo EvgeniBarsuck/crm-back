@@ -8,6 +8,7 @@ export const orders = pgTable('orders', {
   merchantId: bigint('merchant_id', { mode: 'number' }).references(() => merchants.id),
   customerId: integer('customer_id').references(() => customers.id),
   totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+  comment: text('comment'),
   status: text('status').default('new'), // new, done, cancelled
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });

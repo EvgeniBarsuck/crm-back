@@ -46,7 +46,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     // @ts-ignore
     const merchantId = req.user.id;
     console.log("merchantId", merchantId);
-    const { total_amount, customer_id } = req.body;
+    const { total_amount, customer_id, comment } = req.body;
 
     if (!total_amount) return res.status(400).json({ error: "No amount" });
 
@@ -58,6 +58,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           customerId: customer_id, // Может быть undefined, если заказ без привязки
           totalAmount: String(total_amount), // Drizzle numeric ждет строку
           status: "new",
+          comment: comment || "",
         })
         .returning();
 
@@ -187,27 +188,30 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     }
   });
 
-  app.delete('/api/orders/:id', telegramAuth, async (req, res) => {
+  app.delete("/api/orders/:id", telegramAuth, async (req, res) => {
     // @ts-ignore
     const merchantId = req.user.id;
     const orderId = parseInt(req.params.id);
-  
+
     try {
-      const [deletedOrder] = await db.delete(orders)
-        .where(and(
-          eq(orders.id, orderId),
-          eq(orders.merchantId, merchantId) // Защита: удаляем только свои
-        ))
+      const [deletedOrder] = await db
+        .delete(orders)
+        .where(
+          and(
+            eq(orders.id, orderId),
+            eq(orders.merchantId, merchantId) // Защита: удаляем только свои
+          )
+        )
         .returning();
-  
+
       if (!deletedOrder) {
-        return res.status(404).json({ error: 'Order not found' });
+        return res.status(404).json({ error: "Order not found" });
       }
-  
+
       res.json({ success: true });
     } catch (e) {
       console.error(e);
-      res.status(500).json({ error: 'Server error' });
+      res.status(500).json({ error: "Server error" });
     }
   });
 };
