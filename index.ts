@@ -4,11 +4,12 @@ import express from "express";
 import { Telegraf } from "telegraf";
 import cors from "cors";
 import { customers, db, merchants } from "./src/database";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { seed } from "./src/database/seed";
 import { setupOrderApi } from "./src/order/order.api";
 import { setupCustomerApi } from "./src/customer/customer.api";
 import { setupMerchantApi } from "./src/merchant/merchant.api";
+import { setupAnalyticsApi } from "src/analytics/analytics.api";
 
 export const run = async () => {
   const app = express();
@@ -32,6 +33,7 @@ export const run = async () => {
 
   setupCustomerApi(app);
   setupMerchantApi(app);
+  setupAnalyticsApi(app);
 
   const token = process.env.TELEGRAM_BOT_TOKEN || "ТВОЙ_ТОКЕН_ИЗ_BOTFATHER";
 
