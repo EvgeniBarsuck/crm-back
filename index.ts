@@ -18,7 +18,7 @@ export const run = async () => {
     cors({
       origin: "*",
       allowedHeaders: ["Authorization", "Content-Type", "Accept"],
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       credentials: true,
     })
   );
