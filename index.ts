@@ -40,10 +40,6 @@ export const run = async () => {
   }
 
   const bot = new Telegraf(token);
-
-  // Запускаем бота без await, чтобы не блокировать запуск сервера
-  bot.launch().catch((err) => console.error("Bot launch error:", err));
-
   bot.start(async (ctx) => {
     const payload = ctx.payload; // Это то, что после ?start=
   
@@ -79,6 +75,10 @@ export const run = async () => {
       }
     }
   });
+
+
+  // Запускаем бота без await, чтобы не блокировать запуск сервера
+  bot.launch().catch((err) => console.error("Bot launch error:", err));
 
   setupOrderApi(app, bot);
 
