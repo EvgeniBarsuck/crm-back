@@ -9,18 +9,15 @@ export const setupAnalyticsApi = (app: Express) => {
     // @ts-ignore
     const merchantId = req.user.id;
     const now = new Date();
-
-    // Начало сегодняшнего дня (00:00)
     const startOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate()
     );
-    // Начало текущего месяца (1 число)
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     try {
-      // 1. Выручка СЕГОДНЯ (сумма active + completed, исключая cancelled)
+      // 1. СЕГОДНЯ (Только completed)
       const [todayRes] = await db
         .select({
           sum: sql<string>`sum(${orders.totalAmount})`,
@@ -30,11 +27,11 @@ export const setupAnalyticsApi = (app: Express) => {
           and(
             eq(orders.merchantId, merchantId),
             gte(orders.createdAt, startOfDay),
-            ne(orders.status, "cancelled")
+            eq(orders.status, "completed") // 👈 БЫЛО: ne('cancelled'), СТАЛО: eq('completed')
           )
         );
 
-      // 2. Выручка ЗА МЕСЯЦ
+      // 2. МЕСЯЦ (Только completed)
       const [monthRes] = await db
         .select({
           sum: sql<string>`sum(${orders.totalAmount})`,
@@ -44,7 +41,7 @@ export const setupAnalyticsApi = (app: Express) => {
           and(
             eq(orders.merchantId, merchantId),
             gte(orders.createdAt, startOfMonth),
-            ne(orders.status, "cancelled")
+            eq(orders.status, "completed") // 👈 Только завершенные
           )
         );
 
@@ -53,7 +50,7 @@ export const setupAnalyticsApi = (app: Express) => {
         month: Number(monthRes?.sum || 0),
       });
     } catch (e) {
-      console.error("Analytics error:", e);
+      console.error(e);
       res.status(500).json({ error: "Server error" });
     }
   });
