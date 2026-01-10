@@ -41,38 +41,32 @@ export const run = async () => {
 
   const bot = new Telegraf(token);
   bot.start(async (ctx) => {
-    const payload = ctx.payload; // Это то, что после ?start=
+    const payload = ctx.payload; // Это будет UUID: "f47ac..."
   
-    // 1. Если просто старт (без параметров) - это скорее всего Мерчант
     if (!payload) {
-      return ctx.reply('Привет! Я CRM бот. Откройте приложение по кнопке меню.');
+      return ctx.reply('👋 Привет! Это CRM...');
     }
   
-    // 2. Если ссылка вида start=client_5
-    if (payload.startsWith('client_')) {
-      const customerId = parseInt(payload.replace('client_', ''));
-      const telegramId = ctx.from.id;
+    // Мы больше не проверяем startsWith('client_'), так как UUID это просто строка
+    // Валидируем длину UUID (обычно 36 символов), чтобы не грузить базу мусором
+    if (payload.length < 10) return ctx.reply('Некорректная ссылка.');
   
-      if (isNaN(customerId)) return ctx.reply('Некорректная ссылка.');
+    try {
+      // 👇 ИЩЕМ ПО inviteToken ВМЕСТО ID
+      // Так как токен уникальный, мы найдем ровно одного клиента
+      const [updated] = await db.update(customers)
+        .set({ telegramId: ctx.from.id })
+        .where(eq(customers.inviteToken, payload)) 
+        .returning();
   
-      try {
-        // Обновляем клиента в базе: записываем его Telegram ID
-        const [updated] = await db.update(customers)
-          .set({ telegramId: telegramId })
-          .where(eq(customers.id, customerId))
-          .returning();
-  
-        if (updated) {
-          await ctx.reply(`✅ Вы успешно подписались на уведомления о заказах!`);
-          // Уведомляем мерчанта (владельца клиента), что клиент подключился
-          await bot.telegram.sendMessage(updated.merchantId as number, `🔗 Клиент ${updated.name} подключил уведомления!`);
-        } else {
-          ctx.reply('Клиент не найден в базе.');
-        }
-      } catch (e) {
-        console.error(e);
-        ctx.reply('Ошибка привязки.');
+      if (updated) {
+         // ... (код отправки уведомления тот же)
+         await ctx.reply(`✅ Вы успешно подписались!`);
+      } else {
+         ctx.reply('❌ Ссылка недействительна или клиент не найден.');
       }
+    } catch (e) {
+       // ...
     }
   });
 

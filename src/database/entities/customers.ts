@@ -10,6 +10,7 @@ export const customers = pgTable('customers', {
   phone: text('phone'),
   comment: text('comment'),
   telegramId: bigint('telegram_id', { mode: 'number' }),
+  inviteToken: text('invite_token').unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

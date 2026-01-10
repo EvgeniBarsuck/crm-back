@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { desc } from 'drizzle-orm';
 import { telegramAuth } from '../middleware/auth';
 import { Express } from "express";
+import { randomUUID } from 'node:crypto';
 
 
 export const setupCustomerApi = (app: Express) => {
@@ -40,6 +41,7 @@ export const setupCustomerApi = (app: Express) => {
           name: name,
           phone: phone || '',
           comment: notes || '',
+          inviteToken: randomUUID(), 
         }).returning();
     
         res.json(newCustomer);
