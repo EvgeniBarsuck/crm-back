@@ -9,6 +9,7 @@ import { setupOrderApi } from "./src/order/order.api";
 import { setupCustomerApi } from "./src/customer/customer.api";
 import { setupMerchantApi } from "./src/merchant/merchant.api";
 import { setupAnalyticsApi } from "./src/analytics/analytics.api";
+import { setupProfileApi } from "./src/profile/profile.api";
 
 export const run = async () => {
   const app = express();
@@ -33,6 +34,7 @@ export const run = async () => {
   setupCustomerApi(app);
   setupMerchantApi(app);
   setupAnalyticsApi(app);
+  setupProfileApi(app);
 
   const token = process.env.TELEGRAM_BOT_TOKEN || "ТВОЙ_ТОКЕН_ИЗ_BOTFATHER";
 

@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ADD COLUMN "currency" text DEFAULT '₽' NOT NULL;

@@ -8,6 +8,7 @@ export const merchants = pgTable('merchants', {
   username: text('username'),
   firstName: text('first_name'), // Новое поле
   languageCode: text('language_code'), // Новое поле
+  currency: text('currency').default('₽').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
