@@ -41,8 +41,6 @@ export const run = async () => {
 
   const bot = new Telegraf(token);
 
-  bot.start((ctx) => ctx.reply("Привет! Бэкенд работает."));
-
   // Запускаем бота без await, чтобы не блокировать запуск сервера
   bot.launch().catch((err) => console.error("Bot launch error:", err));
 
