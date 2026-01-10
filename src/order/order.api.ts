@@ -1,7 +1,7 @@
 import { telegramAuth } from "../middleware/auth";
 import { db } from "../database/db";
 import { orders } from "../database/entities/orders";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { Express } from "express";
 import { customers } from "../database/entities/customers";
 import { Context, Telegraf } from "telegraf";
@@ -184,6 +184,30 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     } catch (e) {
       console.error("🔥 Ошибка базы данных:", e);
       res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.delete('/api/orders/:id', telegramAuth, async (req, res) => {
+    // @ts-ignore
+    const merchantId = req.user.id;
+    const orderId = parseInt(req.params.id);
+  
+    try {
+      const [deletedOrder] = await db.delete(orders)
+        .where(and(
+          eq(orders.id, orderId),
+          eq(orders.merchantId, merchantId) // Защита: удаляем только свои
+        ))
+        .returning();
+  
+      if (!deletedOrder) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+  
+      res.json({ success: true });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: 'Server error' });
     }
   });
 };
