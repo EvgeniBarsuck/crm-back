@@ -3,8 +3,8 @@ import { telegramAuth } from "./src/middleware/auth";
 import express from "express";
 import { Telegraf } from "telegraf";
 import cors from "cors";
-import { db, merchants } from "./src/database";
-import { sql } from "drizzle-orm";
+import { customers, db, merchants } from "./src/database";
+import { eq, sql } from "drizzle-orm";
 import { seed } from "./src/database/seed";
 import { setupOrderApi } from "./src/order/order.api";
 import { setupCustomerApi } from "./src/customer/customer.api";
@@ -45,6 +45,42 @@ export const run = async () => {
 
   // Запускаем бота без await, чтобы не блокировать запуск сервера
   bot.launch().catch((err) => console.error("Bot launch error:", err));
+
+  bot.start(async (ctx) => {
+    const payload = ctx.payload; // Это то, что после ?start=
+  
+    // 1. Если просто старт (без параметров) - это скорее всего Мерчант
+    if (!payload) {
+      return ctx.reply('Привет! Я CRM бот. Откройте приложение по кнопке меню.');
+    }
+  
+    // 2. Если ссылка вида start=client_5
+    if (payload.startsWith('client_')) {
+      const customerId = parseInt(payload.replace('client_', ''));
+      const telegramId = ctx.from.id;
+  
+      if (isNaN(customerId)) return ctx.reply('Некорректная ссылка.');
+  
+      try {
+        // Обновляем клиента в базе: записываем его Telegram ID
+        const [updated] = await db.update(customers)
+          .set({ telegramId: telegramId })
+          .where(eq(customers.id, customerId))
+          .returning();
+  
+        if (updated) {
+          await ctx.reply(`✅ Вы успешно подписались на уведомления о заказах!`);
+          // Уведомляем мерчанта (владельца клиента), что клиент подключился
+          await bot.telegram.sendMessage(updated.merchantId as number, `🔗 Клиент ${updated.name} подключил уведомления!`);
+        } else {
+          ctx.reply('Клиент не найден в базе.');
+        }
+      } catch (e) {
+        console.error(e);
+        ctx.reply('Ошибка привязки.');
+      }
+    }
+  });
 
   setupOrderApi(app, bot);
 

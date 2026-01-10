@@ -9,6 +9,7 @@ export const customers = pgTable('customers', {
   name: text('name').notNull(),
   phone: text('phone'),
   comment: text('comment'),
+  telegramId: bigint('telegram_id', { mode: 'number' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

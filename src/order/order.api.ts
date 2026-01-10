@@ -146,6 +146,36 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           `Статус заказа #${orderId} изменен на: ${statusEmoji[status]} <b>${status}</b>`,
           { parse_mode: "HTML" }
         );
+
+        try {
+          // Нам нужно достать telegramId клиента через JOIN
+          const [orderWithClient] = await db
+            .select({
+              clientTgId: customers.telegramId,
+              clientName: customers.name,
+            })
+            .from(orders)
+            .leftJoin(customers, eq(orders.customerId, customers.id))
+            .where(eq(orders.id, orderId));
+
+          if (orderWithClient && orderWithClient.clientTgId) {
+            // Текст для клиента (более вежливый)
+            const clientMessages: Record<string, string> = {
+              in_progress: `👨‍🍳 Ваш заказ #${orderId} принят в работу!`,
+              completed: `🎁 Ура! Ваш заказ #${orderId} готов.!`,
+              cancelled: `❌ Ваш заказ #${orderId} был отменен.`,
+            };
+
+            if (clientMessages[status]) {
+              await bot.telegram.sendMessage(
+                Number(orderWithClient.clientTgId),
+                clientMessages[status]
+              );
+            }
+          }
+        } catch (clientErr) {
+          console.error("Не удалось отправить клиенту:", clientErr);
+        }
       } catch (msgErr) {
         console.error("Не удалось отправить сообщение в ТГ:", msgErr);
       }
