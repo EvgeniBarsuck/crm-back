@@ -64,6 +64,21 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     const symbol = merchantData?.currency || "₽";
 
     try {
+      // Парсим дедлайн безопасно
+      let parsedDeadline: Date | null = null;
+      if (deadline) {
+        try {
+          parsedDeadline = new Date(deadline);
+          // Проверяем, что дата валидна
+          if (isNaN(parsedDeadline.getTime())) {
+            parsedDeadline = null;
+          }
+        } catch (e) {
+          console.error("Invalid deadline format:", deadline);
+          parsedDeadline = null;
+        }
+      }
+
       const [newOrder] = await db
         .insert(orders)
         .values({
@@ -72,7 +87,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           totalAmount: String(total_amount), // Drizzle numeric ждет строку
           status: "new",
           comment: comment || "",
-          deadline: deadline ? new Date(deadline) : null, // Дедлайн (опционально)
+          deadline: parsedDeadline, // Дедлайн (опционально)
         })
         .returning();
 
