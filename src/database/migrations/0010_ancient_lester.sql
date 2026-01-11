@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ADD COLUMN "deadline" timestamp with time zone;

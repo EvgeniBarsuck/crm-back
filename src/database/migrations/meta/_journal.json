@@ -71,6 +71,13 @@
       "when": 1768151484854,
       "tag": "0009_curious_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768159592135,
+      "tag": "0010_ancient_lester",
+      "breakpoints": true
     }
   ]
 }
