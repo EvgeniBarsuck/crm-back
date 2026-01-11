@@ -5,7 +5,19 @@ import { SUBSCRIPTION_PLANS, TRIAL_PERIOD_DAYS } from './subscription.config';
 
 export class SubscriptionService {
   // Получить подписку мерчанта
-  static async getSubscription(merchantId: number) {
+  static async getSubscription(merchantId: number): Promise<{
+    id: number;
+    merchantId: number;
+    plan: string;
+    status: string;
+    startDate: Date;
+    endDate: Date | null;
+    isTrialUsed: boolean | null;
+    lastPaymentId: string | null;
+    lastPaymentDate: Date | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+  }> {
     const [subscription] = await db
       .select()
       .from(subscriptions)

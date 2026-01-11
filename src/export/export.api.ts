@@ -111,14 +111,13 @@ export const setupExportApi = (app: Express) => {
         orderBy: (products, { desc }) => [desc(products.createdAt)],
       });
 
-      const csvHeader = 'ID,Название,Цена,Активен,Дата создания\n';
+      const csvHeader = 'ID,Название,Цена,Дата создания\n';
       const csvRows = productsList.map(product => {
         const name = product.name || 'Без названия';
         const price = product.price || 0;
-        const isActive = product.isActive ? 'Да' : 'Нет';
         const date = product.createdAt ? new Date(product.createdAt).toLocaleDateString('ru-RU') : '-';
 
-        return `${product.id},"${name}",${price},${isActive},${date}`;
+        return `${product.id},"${name}",${price},${date}`;
       }).join('\n');
 
       const csv = csvHeader + csvRows;
