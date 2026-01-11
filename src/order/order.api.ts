@@ -52,15 +52,15 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
 
     if (!total_amount) return res.status(400).json({ error: "No amount" });
 
-
     // 1. 👇 Сначала узнаем валюту мерчанта
-    const [merchantData] = await db.select({ 
-        currency: merchants.currency 
+    const [merchantData] = await db
+      .select({
+        currency: merchants.currency,
       })
       .from(merchants)
       .where(eq(merchants.id, merchantId));
 
-    const symbol = merchantData?.currency || '₽';
+    const symbol = merchantData?.currency || "₽";
 
     try {
       const [newOrder] = await db
@@ -166,23 +166,61 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
             .select({
               clientTgId: customers.telegramId,
               clientName: customers.name,
+              tplInProgress: merchants.tplInProgress,
+              tplCompleted: merchants.tplCompleted,
+              tplCancelled: merchants.tplCancelled,
+              currency: merchants.currency,
             })
             .from(orders)
             .leftJoin(customers, eq(orders.customerId, customers.id))
+            .leftJoin(merchants, eq(orders.merchantId, merchants.id))
             .where(eq(orders.id, orderId));
 
           if (orderWithClient && orderWithClient.clientTgId) {
             // Текст для клиента (более вежливый)
-            const clientMessages: Record<string, string> = {
-              in_progress: `👨‍🍳 Ваш заказ #${orderId} принят в работу!`,
-              completed: `🎁 Ура! Ваш заказ #${orderId} готов.!`,
-              cancelled: `❌ Ваш заказ #${orderId} был отменен.`,
+            const formatMessage = (
+              template: string | null,
+              defaultText: string
+            ) => {
+              if (!template || template.trim() === "") return defaultText;
+
+              return template
+                .replace(/{id}/g, String(orderId))
+                .replace(/{name}/g, orderWithClient.clientName || "")
+                .replace(
+                  /{sum}/g,
+                  `${updatedOrder.totalAmount} ${
+                    orderWithClient.currency || "₽"
+                  }`
+                ); // Сумма сразу с валютой
             };
 
-            if (clientMessages[status]) {
+            let message = "";
+
+            if (status === "in_progress") {
+              message = formatMessage(
+                orderWithClient.tplInProgress || "",
+                `👨‍🍳 Ваш заказ #${orderId} принят в работу!` // Текст по умолчанию
+              );
+            } else if (status === "completed") {
+              message = formatMessage(
+                orderWithClient.tplCompleted || "",
+                `🎁 Ваш заказ #${orderId} готов! К оплате: ${
+                  updatedOrder.totalAmount
+                } ${orderWithClient.currency || "₽"}`
+              );
+            } else if (status === "cancelled") {
+              message = formatMessage(
+                orderWithClient.tplCancelled || "",
+                `❌ Заказ #${orderId} отменен.`
+              );
+            }
+
+            // Отправляем (только если сообщение не пустое)
+            if (message) {
               await bot.telegram.sendMessage(
                 Number(orderWithClient.clientTgId),
-                clientMessages[status]
+                message
               );
             }
           }

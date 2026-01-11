@@ -50,6 +50,13 @@
       "when": 1768084318154,
       "tag": "0006_fancy_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1768124252356,
+      "tag": "0007_daffy_kate_bishop",
+      "breakpoints": true
     }
   ]
 }

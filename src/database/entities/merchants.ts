@@ -9,6 +9,9 @@ export const merchants = pgTable('merchants', {
   firstName: text('first_name'), // Новое поле
   languageCode: text('language_code'), // Новое поле
   currency: text('currency').default('₽').notNull(),
+  tplInProgress: text('tpl_in_progress'), // "Ваш заказ {id} принят..."
+  tplCompleted: text('tpl_completed'),    // "Заказ готов!..."
+  tplCancelled: text('tpl_cancelled'),    // "Заказ отменен..."
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

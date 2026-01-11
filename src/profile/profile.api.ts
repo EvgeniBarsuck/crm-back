@@ -19,7 +19,9 @@ export const setupProfileApi = (app: Express) => {
     res.json({
       username: merchant.username,
       currency: merchant.currency, // 👇 Отдаем валюту
-      // ... шаблоны ...
+      tplInProgress: merchant.tplInProgress,
+      tplCompleted: merchant.tplCompleted,
+      tplCancelled: merchant.tplCancelled,
     });
   });
 
@@ -37,5 +39,27 @@ export const setupProfileApi = (app: Express) => {
       .where(eq(merchants.id, merchantId));
 
     res.json({ success: true, currency });
+  });
+
+  app.patch('/api/profile/templates', telegramAuth, async (req, res) => {
+    // @ts-ignore
+    const merchantId = req.user.id;
+    // Фронт пришлет поля именно с такими именами
+    const { in_progress, completed, cancelled } = req.body; 
+  
+    try {
+      await db.update(merchants)
+        .set({
+          tplInProgress: in_progress, // null или строка
+          tplCompleted: completed,
+          tplCancelled: cancelled
+        })
+        .where(eq(merchants.id, merchantId));
+  
+      res.json({ success: true });
+    } catch (e) {
+      console.error("Error saving templates:", e);
+      res.status(500).json({ error: 'Server error' });
+    }
   });
 };
