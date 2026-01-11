@@ -51,7 +51,7 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
       # Локально (относительный путь):
-      - ../web/client/build/web:/var/www/bar-uk-frontend
+      - ../cam-front/build/web:/var/www/bar-uk-frontend
       # На сервере (если структура другая, замените на абсолютный путь):
       # - /root/CRM_1_month/web/client/build/web:/var/www/bar-uk-frontend
     depends_on:
