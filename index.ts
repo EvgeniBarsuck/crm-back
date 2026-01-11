@@ -11,6 +11,11 @@ import { setupMerchantApi } from "./src/merchant/merchant.api";
 import { setupAnalyticsApi } from "./src/analytics/analytics.api";
 import { setupProfileApi } from "./src/profile/profile.api";
 import { setupProductApi } from "./src/product/product.api";
+import { setupBackupScheduler } from "./src/backup/backup.scheduler";
+import { setupSubscriptionApi } from "./src/subscription/subscription.api";
+import { SubscriptionService } from "./src/subscription/subscription.service";
+import { setupApiKeysApi } from "./src/api-keys/api-keys.api";
+import { setupExportApi } from "./src/export/export.api";
 
 export const run = async () => {
   const app = express();
@@ -37,6 +42,10 @@ export const run = async () => {
   setupAnalyticsApi(app);
   setupProfileApi(app);
   setupProductApi(app);
+  
+  // Premium фичи
+  setupApiKeysApi(app); // API токены (PREMIUM)
+  setupExportApi(app); // Экспорт данных (PREMIUM)
 
   const token = process.env.TELEGRAM_BOT_TOKEN || "ТВОЙ_ТОКЕН_ИЗ_BOTFATHER";
 
@@ -76,10 +85,47 @@ export const run = async () => {
     }
   });
 
+  // Обработка успешных платежей (Telegram Payments)
+  bot.on('pre_checkout_query', async (ctx) => {
+    console.log('Pre-checkout query received:', ctx.preCheckoutQuery);
+    // Всегда подтверждаем (можно добавить доп. проверки)
+    await ctx.answerPreCheckoutQuery(true);
+  });
+
+  bot.on('successful_payment', async (ctx) => {
+    console.log('Successful payment:', ctx.message?.successful_payment);
+    const payment = ctx.message?.successful_payment;
+
+    if (!payment) return;
+
+    // Парсим payload: subscription_{merchantId}_{plan}
+    const [, merchantIdStr, plan] = payment.invoice_payload.split('_');
+    const merchantId = parseInt(merchantIdStr);
+
+    if (!merchantId || !plan) {
+      console.error('Invalid payment payload:', payment.invoice_payload);
+      return;
+    }
+
+    try {
+      // Активируем подписку
+      await SubscriptionService.upgradePlan(merchantId, plan as 'pro' | 'premium', payment.telegram_payment_charge_id);
+
+      await ctx.reply(
+        `🎉 Подписка ${plan.toUpperCase()} активирована!\n\n` +
+        `Теперь вам доступны все PRO функции.`
+      );
+    } catch (error) {
+      console.error('Error activating subscription:', error);
+      await ctx.reply('❌ Ошибка активации подписки. Свяжитесь с поддержкой.');
+    }
+  });
+
   // Запускаем бота без await, чтобы не блокировать запуск сервера
   bot.launch().catch((err) => console.error("Bot launch error:", err));
 
   setupOrderApi(app, bot);
+  setupSubscriptionApi(app, bot);
 
   // Роут для авторизации/регистрации
   app.get("/api/auth/me", telegramAuth, async (req, res) => {
@@ -114,6 +160,9 @@ export const run = async () => {
   await app.listen(process.env.PORT || 3000, () => {
     console.log("Server is running on port 3000");
   });
+
+  // Запускаем планировщик автоматических бэкапов
+  setupBackupScheduler();
 
   process.once("SIGINT", () => bot.stop("SIGINT"));
   process.once("SIGTERM", () => bot.stop("SIGTERM"));

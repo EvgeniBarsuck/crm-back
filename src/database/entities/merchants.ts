@@ -3,6 +3,7 @@ import { relations } from 'drizzle-orm';
 import { customers } from './customers';
 import { orders } from './orders';
 import { products } from './products';
+import { apiTokens } from './api-tokens';
 
 export const merchants = pgTable('merchants', {
   id: bigint('id', { mode: 'number' }).primaryKey(), // Telegram ID
@@ -20,4 +21,5 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   customers: many(customers),
   orders: many(orders),
   products: many(products),
+  apiTokens: many(apiTokens),
 }));
