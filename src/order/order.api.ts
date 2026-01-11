@@ -1,7 +1,7 @@
 import { telegramAuth } from "../middleware/auth";
 import { db } from "../database/db";
 import { orders } from "../database/entities/orders";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, isNotNull } from "drizzle-orm";
 import { Express } from "express";
 import { customers } from "../database/entities/customers";
 import { Context, Telegraf } from "telegraf";
@@ -24,6 +24,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           totalAmount: orders.totalAmount,
           status: orders.status,
           createdAt: orders.createdAt,
+          deadline: orders.deadline, // Дедлайн
           // 👇 ВАЖНО: Явно берем имя и называем его customerName
           customerName: customers.name,
           comment: orders.comment,
@@ -48,7 +49,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
     // @ts-ignore
     const merchantId = req.user.id;
     console.log("merchantId", merchantId);
-    const { total_amount, customer_id, comment } = req.body;
+    const { total_amount, customer_id, comment, deadline } = req.body;
 
     if (!total_amount) return res.status(400).json({ error: "No amount" });
 
@@ -71,6 +72,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           totalAmount: String(total_amount), // Drizzle numeric ждет строку
           status: "new",
           comment: comment || "",
+          deadline: deadline ? new Date(deadline) : null, // Дедлайн (опционально)
         })
         .returning();
 
@@ -299,6 +301,55 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
       }
 
       res.json(updatedOrder);
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // GET /api/orders/calendar - Получить заказы для календаря
+  app.get("/api/orders/calendar", telegramAuth, async (req, res) => {
+    // @ts-ignore
+    const merchantId = req.user.id;
+    const { start, end } = req.query; // Диапазон дат (YYYY-MM-DD)
+
+    try {
+      let query = db
+        .select({
+          id: orders.id,
+          totalAmount: orders.totalAmount,
+          status: orders.status,
+          deadline: orders.deadline,
+          createdAt: orders.createdAt,
+          customerName: customers.name,
+          comment: orders.comment,
+        })
+        .from(orders)
+        .leftJoin(customers, eq(orders.customerId, customers.id))
+        .where(eq(orders.merchantId, merchantId))
+        .$dynamic();
+
+      // Фильтруем только заказы с дедлайном
+      query = query.where(
+        and(
+          eq(orders.merchantId, merchantId),
+          isNotNull(orders.deadline)
+        )
+      );
+
+      const ordersList = await query.orderBy(orders.deadline);
+
+      // Группируем по датам дедлайна
+      const grouped: { [date: string]: any[] } = {};
+      ordersList.forEach(order => {
+        if (order.deadline) {
+          const dateKey = order.deadline.toISOString().split('T')[0]; // YYYY-MM-DD
+          if (!grouped[dateKey]) grouped[dateKey] = [];
+          grouped[dateKey].push(order);
+        }
+      });
+
+      res.json(grouped);
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Server error" });

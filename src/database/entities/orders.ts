@@ -10,6 +10,7 @@ export const orders = pgTable('orders', {
   totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull().default('0'),
   comment: text('comment'),
   status: text('status').default('new'), // new, done, cancelled
+  deadline: timestamp('deadline', { withTimezone: true }), // Дедлайн выполнения заказа
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

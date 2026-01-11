@@ -3,6 +3,7 @@ import { db } from "../database/db";
 import { merchants } from "../database/entities/merchants";
 import { telegramAuth } from "../middleware/auth";
 import { eq } from "drizzle-orm";
+import { SubscriptionService } from "../subscription/subscription.service";
 
 export const setupProfileApi = (app: Express) => {
   app.get("/api/profile", telegramAuth, async (req, res) => {
@@ -48,6 +49,14 @@ export const setupProfileApi = (app: Express) => {
     const { in_progress, completed, cancelled } = req.body; 
   
     try {
+      // Проверяем доступ к фиче templates (только PRO и PREMIUM)
+      const hasAccess = await SubscriptionService.hasAccess(merchantId, 'templates');
+      if (!hasAccess) {
+        return res.status(403).json({ 
+          error: 'Шаблоны уведомлений доступны на тарифах PRO (250 ⭐/мес) и PREMIUM (400 ⭐/мес)' 
+        });
+      }
+
       await db.update(merchants)
         .set({
           tplInProgress: in_progress, // null или строка
