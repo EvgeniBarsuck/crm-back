@@ -5,6 +5,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { Express } from "express";
 import { customers } from "../database/entities/customers";
 import { Context, Telegraf } from "telegraf";
+import { merchants } from "../database/entities/merchants";
 
 export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
   console.log("🛠️ Регистрируем роуты Order API..."); // DEBUG
@@ -51,6 +52,16 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
 
     if (!total_amount) return res.status(400).json({ error: "No amount" });
 
+
+    // 1. 👇 Сначала узнаем валюту мерчанта
+    const [merchantData] = await db.select({ 
+        currency: merchants.currency 
+      })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId));
+
+    const symbol = merchantData?.currency || '₽';
+
     try {
       const [newOrder] = await db
         .insert(orders)
@@ -78,7 +89,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
   ✅ <b>Новый заказ #${newOrder.id}</b>
   
   👤 Клиент: <b>${customerName}</b>
-  💰 Сумма: <b>${total_amount} ₽</b>
+  💰 Сумма: <b>${total_amount} ${symbol}</b>
   🕒 Статус: 🆕 Новый
   
   <i>Заказ сохранен в базе данных.</i>
