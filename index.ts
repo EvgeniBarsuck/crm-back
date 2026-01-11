@@ -16,6 +16,7 @@ import { setupSubscriptionApi } from "./src/subscription/subscription.api";
 import { SubscriptionService } from "./src/subscription/subscription.service";
 import { setupApiKeysApi } from "./src/api-keys/api-keys.api";
 import { setupExportApi } from "./src/export/export.api";
+import { setupBroadcastApi } from "./src/broadcast/broadcast.api";
 
 export const run = async () => {
   const app = express();
@@ -126,6 +127,7 @@ export const run = async () => {
 
   setupOrderApi(app, bot);
   setupSubscriptionApi(app, bot);
+  setupBroadcastApi(app, bot); // Рассылки
 
   // Роут для авторизации/регистрации
   app.get("/api/auth/me", telegramAuth, async (req, res) => {
