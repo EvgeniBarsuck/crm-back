@@ -1,0 +1,47 @@
+{
+  "order": {
+    "status": {
+      "new": "New",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "notifications": {
+      "in_progress": "Hello, {{name}}! Your order #{{id}} for {{sum}} has been accepted.",
+      "completed": "{{name}}, your order #{{id}} for {{sum}} is ready! Thank you!",
+      "cancelled": "{{name}}, unfortunately your order #{{id}} for {{sum}} has been cancelled."
+    }
+  },
+  "subscription": {
+    "plans": {
+      "free": "Free",
+      "pro": "PRO",
+      "premium": "PREMIUM"
+    },
+    "features": {
+      "notifications": "Customer notifications",
+      "templates": "Custom templates",
+      "analytics": "Advanced analytics",
+      "backups": "Automatic backups",
+      "apiAccess": "REST API access",
+      "exportData": "Data export",
+      "multiUser": "Team access",
+      "whiteLabel": "White label"
+    },
+    "trial_activated": "🎉 PRO trial activated for 7 days!",
+    "payment_received": "✅ Payment received! {{plan}} plan activated until {{endDate}}",
+    "payment_cancelled": "❌ Payment cancelled"
+  },
+  "broadcast": {
+    "sending": "📤 Sending broadcast...",
+    "sent": "✅ Broadcast sent: {{sent}} of {{total}}",
+    "failed": "❌ Broadcast failed"
+  },
+  "errors": {
+    "unauthorized": "Authorization required",
+    "forbidden": "Access denied",
+    "not_found": "Not found",
+    "server_error": "Server error",
+    "subscription_required": "{{plan}} subscription required"
+  }
+}

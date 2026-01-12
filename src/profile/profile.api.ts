@@ -20,6 +20,7 @@ export const setupProfileApi = (app: Express) => {
     res.json({
       username: merchant.username,
       currency: merchant.currency, // 👇 Отдаем валюту
+      language: merchant.language || 'ru', // 👇 Отдаем язык
       tplInProgress: merchant.tplInProgress,
       tplCompleted: merchant.tplCompleted,
       tplCancelled: merchant.tplCancelled,
@@ -40,6 +41,28 @@ export const setupProfileApi = (app: Express) => {
       .where(eq(merchants.id, merchantId));
 
     res.json({ success: true, currency });
+  });
+
+  // 3. Роут для смены языка
+  app.patch("/api/profile/language", telegramAuth, async (req, res) => {
+    // @ts-ignore
+    const merchantId = req.user.id;
+    const { language } = req.body; // Ждем код языка: 'ru', 'en', 'pl'
+
+    // Валидация языка
+    const supportedLanguages = ['ru', 'en'];
+    if (!language || !supportedLanguages.includes(language)) {
+      return res.status(400).json({ 
+        error: "Invalid language. Supported: " + supportedLanguages.join(', ') 
+      });
+    }
+
+    await db
+      .update(merchants)
+      .set({ language: language })
+      .where(eq(merchants.id, merchantId));
+
+    res.json({ success: true, language });
   });
 
   app.patch('/api/profile/templates', telegramAuth, async (req, res) => {

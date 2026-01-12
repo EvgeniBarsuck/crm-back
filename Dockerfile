@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Устанавливаем PostgreSQL клиент для бэкапов (pg_dump)
+RUN apk add --no-cache postgresql-client
+
 # Копируем файлы зависимостей
 COPY package*.json ./
 

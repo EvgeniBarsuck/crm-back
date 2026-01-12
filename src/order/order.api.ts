@@ -6,6 +6,7 @@ import { Express } from "express";
 import { customers } from "../database/entities/customers";
 import { Context, Telegraf } from "telegraf";
 import { merchants } from "../database/entities/merchants";
+import { getTranslator } from "../i18n";
 
 export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
   console.log("🛠️ Регистрируем роуты Order API..."); // DEBUG
@@ -187,6 +188,7 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
               tplCompleted: merchants.tplCompleted,
               tplCancelled: merchants.tplCancelled,
               currency: merchants.currency,
+              language: merchants.language, // Добавили язык для i18n
             })
             .from(orders)
             .leftJoin(customers, eq(orders.customerId, customers.id))
@@ -194,22 +196,33 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
             .where(eq(orders.id, orderId));
 
           if (orderWithClient && orderWithClient.clientTgId) {
+            // Получаем переводчик для языка мерчанта
+            const t = getTranslator(orderWithClient.language || 'ru');
+            
             // Текст для клиента (более вежливый)
             const formatMessage = (
               template: string | null,
-              defaultText: string
+              defaultTextKey: string
             ) => {
-              if (!template || template.trim() === "") return defaultText;
-
-              return template
-                .replace(/{id}/g, String(orderId))
-                .replace(/{name}/g, orderWithClient.clientName || "")
-                .replace(
-                  /{sum}/g,
-                  `${updatedOrder.totalAmount} ${
-                    orderWithClient.currency || "₽"
-                  }`
-                ); // Сумма сразу с валютой
+              // Если есть кастомный шаблон - используем его
+              if (template && template.trim() !== "") {
+                return template
+                  .replace(/{id}/g, String(orderId))
+                  .replace(/{name}/g, orderWithClient.clientName || "")
+                  .replace(
+                    /{sum}/g,
+                    `${updatedOrder.totalAmount} ${
+                      orderWithClient.currency || "₽"
+                    }`
+                  );
+              }
+              
+              // Иначе используем перевод из i18n
+              return t(defaultTextKey, {
+                name: orderWithClient.clientName || t('common.guest'),
+                id: String(orderId),
+                sum: `${updatedOrder.totalAmount} ${orderWithClient.currency || "₽"}`,
+              });
             };
 
             let message = "";
@@ -217,19 +230,17 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
             if (status === "in_progress") {
               message = formatMessage(
                 orderWithClient.tplInProgress || "",
-                `👨‍🍳 Ваш заказ #${orderId} принят в работу!` // Текст по умолчанию
+                'order.notifications.in_progress'
               );
             } else if (status === "completed") {
               message = formatMessage(
                 orderWithClient.tplCompleted || "",
-                `🎁 Ваш заказ #${orderId} готов! К оплате: ${
-                  updatedOrder.totalAmount
-                } ${orderWithClient.currency || "₽"}`
+                'order.notifications.completed'
               );
             } else if (status === "cancelled") {
               message = formatMessage(
                 orderWithClient.tplCancelled || "",
-                `❌ Заказ #${orderId} отменен.`
+                'order.notifications.cancelled'
               );
             }
 

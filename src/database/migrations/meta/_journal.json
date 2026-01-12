@@ -78,6 +78,13 @@
       "when": 1768159592135,
       "tag": "0010_ancient_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1768208968285,
+      "tag": "0011_add_language_to_merchants",
+      "breakpoints": true
     }
   ]
 }

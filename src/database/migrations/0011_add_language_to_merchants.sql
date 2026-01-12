@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ADD COLUMN "language" text DEFAULT 'ru' NOT NULL;
