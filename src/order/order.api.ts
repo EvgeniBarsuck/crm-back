@@ -166,34 +166,48 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
 
       // Пытаемся отправить уведомление (в try/catch, чтобы не ронять запрос)
       try {
+        // Нам нужно достать telegramId клиента через JOIN и язык мерчанта
+        const [orderWithClient] = await db
+          .select({
+            clientTgId: customers.telegramId,
+            clientName: customers.name,
+            tplInProgress: merchants.tplInProgress,
+            tplCompleted: merchants.tplCompleted,
+            tplCancelled: merchants.tplCancelled,
+            currency: merchants.currency,
+            language: merchants.language, // Язык мерчанта для i18n
+          })
+          .from(orders)
+          .leftJoin(customers, eq(orders.customerId, customers.id))
+          .leftJoin(merchants, eq(orders.merchantId, merchants.id))
+          .where(eq(orders.id, orderId));
+
+        // Получаем переводчик для языка мерчанта
+        const merchantLanguage = orderWithClient?.language || 'ru';
+        const t = getTranslator(merchantLanguage);
+
+        // Отправляем уведомление мерчанту
         const statusEmoji: Record<string, string> = {
           new: "🆕",
           in_progress: "⏳",
           completed: "✅",
           cancelled: "❌",
         };
+        
+        const statusName = t(`order.status.${status}`);
+        const merchantMessage = t('order.notifications.merchant_status_changed', {
+          id: String(orderId),
+          emoji: statusEmoji[status],
+          status: statusName,
+        });
+        
         await bot.telegram.sendMessage(
           merchantId,
-          `Статус заказа #${orderId} изменен на: ${statusEmoji[status]} <b>${status}</b>`,
+          merchantMessage,
           { parse_mode: "HTML" }
         );
 
         try {
-          // Нам нужно достать telegramId клиента через JOIN
-          const [orderWithClient] = await db
-            .select({
-              clientTgId: customers.telegramId,
-              clientName: customers.name,
-              tplInProgress: merchants.tplInProgress,
-              tplCompleted: merchants.tplCompleted,
-              tplCancelled: merchants.tplCancelled,
-              currency: merchants.currency,
-              language: merchants.language, // Добавили язык для i18n
-            })
-            .from(orders)
-            .leftJoin(customers, eq(orders.customerId, customers.id))
-            .leftJoin(merchants, eq(orders.merchantId, merchants.id))
-            .where(eq(orders.id, orderId));
 
           if (orderWithClient && orderWithClient.clientTgId) {
             // Получаем переводчик для языка мерчанта

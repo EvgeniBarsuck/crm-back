@@ -1,4 +1,7 @@
 {
+  "common": {
+    "guest": "Guest"
+  },
   "order": {
     "status": {
       "new": "New",
@@ -9,7 +12,8 @@
     "notifications": {
       "in_progress": "Hello, {{name}}! Your order #{{id}} for {{sum}} has been accepted.",
       "completed": "{{name}}, your order #{{id}} for {{sum}} is ready! Thank you!",
-      "cancelled": "{{name}}, unfortunately your order #{{id}} for {{sum}} has been cancelled."
+      "cancelled": "{{name}}, unfortunately your order #{{id}} for {{sum}} has been cancelled.",
+      "merchant_status_changed": "Order #{{id}} status changed to: {{emoji}} <b>{{status}}</b>"
     }
   },
   "subscription": {

@@ -1,4 +1,7 @@
 {
+  "common": {
+    "guest": "Гость"
+  },
   "order": {
     "status": {
       "new": "Новый",
@@ -9,7 +12,8 @@
     "notifications": {
       "in_progress": "Привет, {{name}}! Ваш заказ #{{id}} на сумму {{sum}} принят в работу.",
       "completed": "{{name}}, ваш заказ #{{id}} на сумму {{sum}} готов! Спасибо за заказ!",
-      "cancelled": "{{name}}, к сожалению, ваш заказ #{{id}} на сумму {{sum}} отменен."
+      "cancelled": "{{name}}, к сожалению, ваш заказ #{{id}} на сумму {{sum}} отменен.",
+      "merchant_status_changed": "Статус заказа #{{id}} изменен на: {{emoji}} <b>{{status}}</b>"
     }
   },
   "subscription": {
