@@ -99,11 +99,25 @@ export const setupAnalyticsApi = (app: Express) => {
         .groupBy(sql`DATE(${orders.createdAt})`)
         .orderBy(sql`DATE(${orders.createdAt})`);
 
-      res.json(salesByDay.map(row => ({
-        date: row.date,
-        sum: Number(row.sum || 0),
-        count: Number(row.count || 0),
-      })));
+      // Создаем карту существующих данных
+      const dataMap = new Map(
+        salesByDay.map(row => [row.date, { sum: Number(row.sum || 0), count: Number(row.count || 0) }])
+      );
+
+      // Заполняем все дни (даже с нулями)
+      const result = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        result.push({
+          date: dateStr,
+          sum: dataMap.get(dateStr)?.sum || 0,
+          count: dataMap.get(dateStr)?.count || 0,
+        });
+      }
+
+      res.json(result);
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Server error" });
