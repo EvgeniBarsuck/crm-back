@@ -25,7 +25,7 @@ export interface SubscriptionPlan {
 export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
   free: {
     id: 'free',
-    name: 'Бесплатный',
+    name: 'FREE',
     price: 0,
     currency: 'XTR', // Telegram Stars
     duration: 0, // бессрочно

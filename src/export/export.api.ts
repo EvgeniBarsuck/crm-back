@@ -1,9 +1,10 @@
 import { Express } from 'express';
 import { telegramAuth } from '../middleware/auth';
 import { db } from '../database/db';
-import { orders, customers, products } from '../database/entities';
+import { orders, customers, products, merchants } from '../database/entities';
 import { eq } from 'drizzle-orm';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { getTranslator } from '../i18n';
 
 export const setupExportApi = (app: Express) => {
   // GET /api/export/orders - Экспорт заказов в CSV
@@ -20,6 +21,12 @@ export const setupExportApi = (app: Express) => {
         });
       }
 
+      // Получаем язык мерчанта
+      const merchant = await db.query.merchants.findFirst({
+        where: eq(merchants.id, merchantId),
+      });
+      const t = getTranslator(merchant?.language || 'ru');
+
       const ordersList = await db.query.orders.findMany({
         where: eq(orders.merchantId, merchantId),
         with: {
@@ -29,14 +36,14 @@ export const setupExportApi = (app: Express) => {
       });
 
       // Формируем CSV
-      const csvHeader = 'ID,Клиент,Телефон,Сумма,Статус,Комментарий,Дата\n';
+      const csvHeader = t('export.ordersHeader') + '\n';
       const csvRows = ordersList.map(order => {
-        const customerName = order.customer?.name || 'Без имени';
+        const customerName = order.customer?.name || t('export.noName');
         const customerPhone = order.customer?.phone || '-';
         const totalAmount = order.totalAmount || 0;
         const status = order.status || 'new';
         const comment = (order.comment || '').replace(/,/g, ' '); // Убираем запятые
-        const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('ru-RU') : '-';
+        const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString(merchant?.language === 'en' ? 'en-US' : 'ru-RU') : '-';
 
         return `${order.id},"${customerName}","${customerPhone}",${totalAmount},${status},"${comment}",${date}`;
       }).join('\n');
@@ -66,18 +73,24 @@ export const setupExportApi = (app: Express) => {
         });
       }
 
+      // Получаем язык мерчанта
+      const merchant = await db.query.merchants.findFirst({
+        where: eq(merchants.id, merchantId),
+      });
+      const t = getTranslator(merchant?.language || 'ru');
+
       const customersList = await db.query.customers.findMany({
         where: eq(customers.merchantId, merchantId),
         orderBy: (customers, { desc }) => [desc(customers.createdAt)],
       });
 
-      const csvHeader = 'ID,Имя,Телефон,Telegram ID,Комментарий,Дата регистрации\n';
+      const csvHeader = t('export.customersHeader') + '\n';
       const csvRows = customersList.map(customer => {
-        const name = customer.name || 'Без имени';
+        const name = customer.name || t('export.noName');
         const phone = customer.phone || '-';
         const telegramId = customer.telegramId || '-';
         const comment = (customer.comment || '').replace(/,/g, ' ');
-        const date = customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('ru-RU') : '-';
+        const date = customer.createdAt ? new Date(customer.createdAt).toLocaleDateString(merchant?.language === 'en' ? 'en-US' : 'ru-RU') : '-';
 
         return `${customer.id},"${name}","${phone}",${telegramId},"${comment}",${date}`;
       }).join('\n');
@@ -106,16 +119,22 @@ export const setupExportApi = (app: Express) => {
         });
       }
 
+      // Получаем язык мерчанта
+      const merchant = await db.query.merchants.findFirst({
+        where: eq(merchants.id, merchantId),
+      });
+      const t = getTranslator(merchant?.language || 'ru');
+
       const productsList = await db.query.products.findMany({
         where: eq(products.userId, merchantId),
         orderBy: (products, { desc }) => [desc(products.createdAt)],
       });
 
-      const csvHeader = 'ID,Название,Цена,Дата создания\n';
+      const csvHeader = t('export.productsHeader') + '\n';
       const csvRows = productsList.map(product => {
-        const name = product.name || 'Без названия';
+        const name = product.name || t('export.noName');
         const price = product.price || 0;
-        const date = product.createdAt ? new Date(product.createdAt).toLocaleDateString('ru-RU') : '-';
+        const date = product.createdAt ? new Date(product.createdAt).toLocaleDateString(merchant?.language === 'en' ? 'en-US' : 'ru-RU') : '-';
 
         return `${product.id},"${name}",${price},${date}`;
       }).join('\n');

@@ -37,6 +37,12 @@
     "sent": "✅ Broadcast sent: {{sent}} of {{total}}",
     "failed": "❌ Broadcast failed"
   },
+  "export": {
+    "ordersHeader": "ID,Customer,Phone,Amount,Status,Comment,Date",
+    "customersHeader": "ID,Name,Phone,Total Orders,Total Amount,Registration Date",
+    "productsHeader": "ID,Name,Price,Created Date",
+    "noName": "No name"
+  },
   "errors": {
     "unauthorized": "Authorization required",
     "forbidden": "Access denied",
