@@ -1,8 +1,14 @@
 {
   "common": {
-    "guest": "Guest"
+    "guest": "Guest",
+    "client": "Client",
+    "noName": "No name",
+    "noTitle": "No title"
   },
   "order": {
+    "client": "Client",
+    "amount": "Amount",
+    "statusLabel": "Status",
     "status": {
       "new": "New",
       "in_progress": "In Progress",
@@ -10,6 +16,8 @@
       "cancelled": "Cancelled"
     },
     "notifications": {
+      "new_order": "New order #{{id}}",
+      "order_saved": "Order saved to database.",
       "in_progress": "Hello, {{name}}! Your order #{{id}} for {{sum}} has been accepted.",
       "completed": "{{name}}, your order #{{id}} for {{sum}} is ready! Thank you!",
       "cancelled": "{{name}}, unfortunately your order #{{id}} for {{sum}} has been cancelled.",
@@ -39,7 +47,9 @@
   "broadcast": {
     "sending": "📤 Sending broadcast...",
     "sent": "✅ Broadcast sent: {{sent}} of {{total}}",
-    "failed": "❌ Broadcast failed"
+    "failed": "❌ Broadcast failed",
+    "subscription_required": "Broadcasts are available on PRO (250 ⭐/month) and PREMIUM (400 ⭐/month) plans",
+    "no_customers": "No customers with Telegram ID in selected segment"
   },
   "export": {
     "ordersHeader": "ID,Customer,Phone,Amount,Status,Comment,Date",
@@ -52,6 +62,14 @@
     "forbidden": "Access denied",
     "not_found": "Not found",
     "server_error": "Server error",
-    "subscription_required": "{{plan}} subscription required"
+    "subscription_required": "{{plan}} subscription required",
+    "access_restricted": "Access restricted",
+    "templates_subscription_required": "Notification templates are available on PRO (250 ⭐/month) and PREMIUM (400 ⭐/month) plans",
+    "trial_already_used": "Trial already used",
+    "unknown_plan": "Unknown plan",
+    "name_required": "Name is required",
+    "title_required": "Title is required",
+    "not_found_product": "Product not found",
+    "delete_draft_only": "Only new orders (drafts) can be deleted"
   }
 }

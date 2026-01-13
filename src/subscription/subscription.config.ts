@@ -30,9 +30,9 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
     currency: 'XTR', // Telegram Stars
     duration: 0, // бессрочно
     features: {
-      maxOrders: 15, // урезали в 2 раза
-      maxCustomers: 15,
-      maxProducts: 5,
+      maxOrders: 10, // урезали для быстрой конверсии в PRO
+      maxCustomers: 5,
+      maxProducts: 3,
       notifications: false,
       templates: false,
       analytics: false,

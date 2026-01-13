@@ -54,15 +54,17 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
 
     if (!total_amount) return res.status(400).json({ error: "No amount" });
 
-    // 1. 👇 Сначала узнаем валюту мерчанта
+    // 1. 👇 Сначала узнаем валюту и язык мерчанта
     const [merchantData] = await db
       .select({
         currency: merchants.currency,
+        language: merchants.language,
       })
       .from(merchants)
       .where(eq(merchants.id, merchantId));
 
     const symbol = merchantData?.currency || "₽";
+    const t = getTranslator(merchantData?.language || 'ru');
 
     try {
       // Парсим дедлайн безопасно
@@ -101,16 +103,16 @@ export const setupOrderApi = (app: Express, bot: Telegraf<Context>) => {
           .from(customers)
           .where(eq(customers.id, customer_id));
 
-        const customerName = customer ? customer.name : "Клиент";
+        const customerName = customer ? customer.name : t('common.client');
 
         const message = `
-  ✅ <b>Новый заказ #${newOrder.id}</b>
+  ✅ <b>${t('order.notifications.new_order', { id: newOrder.id })}</b>
   
-  👤 Клиент: <b>${customerName}</b>
-  💰 Сумма: <b>${total_amount} ${symbol}</b>
-  🕒 Статус: 🆕 Новый
+  👤 ${t('order.client')}: <b>${customerName}</b>
+  💰 ${t('order.amount')}: <b>${total_amount} ${symbol}</b>
+  🕒 ${t('order.statusLabel')}: 🆕 ${t('order.status.new')}
   
-  <i>Заказ сохранен в базе данных.</i>
+  <i>${t('order.notifications.order_saved')}</i>
         `;
 
         await bot.telegram.sendMessage(merchantId, message, {

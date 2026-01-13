@@ -1,10 +1,11 @@
 import { Express } from "express";
 import { telegramAuth } from "../middleware/auth";
 import { db } from "../database/db";
-import { customers, orders } from "../database/entities";
+import { customers, orders, merchants } from "../database/entities";
 import { eq, sql, desc, and } from "drizzle-orm";
 import { Telegraf } from "telegraf";
 import { SubscriptionService } from "../subscription/subscription.service";
+import { getTranslator } from "../i18n";
 
 export const setupBroadcastApi = (app: Express, bot: Telegraf) => {
   // POST /api/broadcast/send - Отправить рассылку
@@ -17,11 +18,15 @@ export const setupBroadcastApi = (app: Express, bot: Telegraf) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
+    // Получаем язык мерчанта для локализации
+    const [merchant] = await db.select().from(merchants).where(eq(merchants.id, merchantId));
+    const t = getTranslator(merchant?.language || 'ru');
+
     // Проверяем доступ к фиче notifications (PRO или PREMIUM)
     const hasAccess = await SubscriptionService.hasAccess(merchantId, 'notifications');
     if (!hasAccess) {
       return res.status(403).json({ 
-        error: 'Рассылки доступны на тарифах PRO (250 ⭐/мес) и PREMIUM (400 ⭐/мес)' 
+        error: t('broadcast.subscription_required')
       });
     }
 
@@ -100,7 +105,7 @@ export const setupBroadcastApi = (app: Express, bot: Telegraf) => {
           success: true, 
           sent: 0, 
           failed: 0,
-          message: 'Нет клиентов с Telegram ID в выбранном сегменте'
+          message: t('broadcast.no_customers')
         });
       }
 
@@ -112,7 +117,7 @@ export const setupBroadcastApi = (app: Express, bot: Telegraf) => {
         try {
           // Заменяем переменные в сообщении
           const personalizedMessage = message
-            .replace(/\{name\}/g, customer.name || 'Клиент')
+            .replace(/\{name\}/g, customer.name || t('common.client'))
             .replace(/\{phone\}/g, customer.phone || '');
 
           await bot.telegram.sendMessage(customer.telegramId!, personalizedMessage);
